@@ -1,67 +1,95 @@
 import { View, Text, Alert, StyleSheet, TextInput, Pressable } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-root-toast';
+import { useIsFocused } from '@react-navigation/native';
 import * as WebBrowser from 'expo-web-browser';
-import { useApiKeyContext } from '../contexts/apiKeyContext';
+import { STORAGE_API_KEY } from '../constants/constants';
 
-const ApiKeyPage = () => {
 
-  const { apiKey, setApiKey } = useApiKeyContext();
-  const [apiKeyInput, setApiKeyInput] = useState(apiKey);
+const KeyPage = () => {
+
+  const [apiKeyValue, setApiKeyValue] = useState('');
+  const [apiKeyExists, setApiKeyExists] = useState(false);
+
+  const isFocused = useIsFocused();
 
   // Function to open the OpenAI API keys page in a browser
   const openApiKeysPage = () => {
     WebBrowser.openBrowserAsync('https://platform.openai.com/api-keys');
   };
 
-  // Save API key to context
-  const saveApiKey = async () => {
-    if (apiKeyInput.trim().length > 0) {
-      setApiKey(apiKeyInput);
-      Toast.show('API key saved', { duration: Toast.durations.SHORT });
-    } else {
-      Alert.alert('Error', 'Please enter a valid API key');
+  // Load API key when the page is focused
+  useEffect(() => {
+    loadApiKey();
+  }, [isFocused]);
+
+  // Load API key from storage
+  const loadApiKey = async () => {
+    try {
+      const apiKey = await AsyncStorage.getItem(STORAGE_API_KEY);
+      
+      if (apiKey !== null) {
+        setApiKeyValue(apiKey);
+        setApiKeyExists(true);
+      } else {
+        setApiKeyValue('');
+        setApiKeyExists(false);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Could not load API key');
     }
   };
 
-  // Remove API key from context
-  const removeApiKey = async () => {
-    setApiKey('');
-    setApiKeyInput('');
-    Toast.show('API key removed', { duration: Toast.durations.SHORT });
+  // Save API key to storage
+  const saveApiKey = async () => {
+    if (apiKeyValue.trim().length > 0) {
+      try {
+        await AsyncStorage.setItem(STORAGE_API_KEY, apiKeyValue);
+        setApiKeyExists(true);
+        Toast.show('API key saved', { duration: Toast.durations.SHORT });
+      } catch (error) {
+        Alert.alert('Error', 'Could not save API key');
+      }
+    }
   };
 
-  // Function to handle button press
-  const handleButtonPress = () => {
-    if (apiKey) {
-      removeApiKey();
-    } else {
-      saveApiKey();
+  // Remove API key from storage
+  const removeApiKey = async () => {
+    try {
+      await AsyncStorage.removeItem(STORAGE_API_KEY);
+      setApiKeyExists(false);
+      setApiKeyValue('');
+      Toast.show('API key removed', { duration: Toast.durations.SHORT });
+    } catch (error) {
+      Alert.alert('Error', 'Could not remove API key');
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>
-        To connect with AI, add an API key. You can obtain an API key from
+        You need to add an API key to connect to the AI. You can obtain the key by visiting
         {' '}
         <Text style={styles.linkText} onPress={openApiKeysPage}>
           https://platform.openai.com/api-keys
         </Text>
-        .
       </Text>
       <TextInput
-        value={apiKeyInput}
-        onChangeText={setApiKeyInput}
+        value={apiKeyValue}
+        onChangeText={setApiKeyValue}
         placeholder='Enter your API key'
         autoCorrect={false}
         autoCapitalize='none'
         style={styles.input}
-        editable={!apiKey}
+        editable={!apiKeyExists}
       />
-      <Pressable onPress={handleButtonPress} style={styles.button}>
+      <Pressable
+        onPress={apiKeyExists ? removeApiKey : saveApiKey}
+        style={styles.button}
+      >
         <Text style={styles.buttonText}>
-          {apiKey ? 'Remove' : 'Save'}
+          {apiKeyExists ? 'Remove' : 'Save'}
         </Text>
       </Pressable>
     </View>
@@ -88,7 +116,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#2F2F2F',
     borderRadius: 8,
-    padding: 8,
+    padding: 12,
     marginVertical: 24,
     backgroundColor: '#fff',
   },
@@ -96,8 +124,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#18191a',
     borderColor: '#2F2F2F',
     borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 24,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
     alignSelf: 'center',
     borderWidth: 2,
   },
@@ -108,4 +136,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ApiKeyPage;
+export default KeyPage;
