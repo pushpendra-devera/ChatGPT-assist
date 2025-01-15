@@ -12,7 +12,7 @@ import React, { useState } from 'react'
 import { Creator, Message, useApi } from '../hooks/useApi'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import userImage from '../../assets/user.png';
-import botImage from '../../assets/bot.png';
+import favicon from '../../assets/favicon.png';
 
 
 const ChatPage = () => {
@@ -39,7 +39,7 @@ const ChatPage = () => {
         styles.messageContainer,
         isUserMessage ? styles.userMessageContainer : styles.botMessageContainer
       ]}>
-        <Image source={isUserMessage ? userImage : botImage} style={styles.image} />
+        <Image source={isUserMessage ? userImage : favicon} style={styles.image} />
         <Text style={styles.messageText} selectable>{item.text}</Text>
       </View>
     )
