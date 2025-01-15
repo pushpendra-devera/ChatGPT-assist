@@ -7,18 +7,23 @@ import ChatPage from './app/screens/Chat';
 import ImagesPage from './app/screens/Images';
 import SettingsPage from './app/screens/SettingsPage';
 import WhisperPage from './app/screens/Whisper';
-
+import { RootSiblingParent } from 'react-native-root-siblings'
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_API_KEY } from './app/constants/constants';
 
 const CustomDrawerContent = (props: DrawerContentComponentProps) => {
-  
+
   const openAccount = () => {
     WebBrowser.openBrowserAsync('https://platform.openai.com/account/usage')
   }
-  
+
   const openHelp = () => {
     WebBrowser.openBrowserAsync('https://help.openai.com/en/collections/3742473-chatgpt')
   }
-  const signOut = () => { }
+  const signOut = async () => {
+    await AsyncStorage.removeItem(STORAGE_API_KEY)
+    props.navigation.navigate('Settings')
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#18191a', padding: 6 }}>
@@ -106,9 +111,11 @@ const DrawerNavigation = () => {
 
 export default function App() {
   return (
-    <NavigationContainer >
-      <DrawerNavigation />
-    </NavigationContainer>
+    <RootSiblingParent>
+      <NavigationContainer >
+        <DrawerNavigation />
+      </NavigationContainer>
+    </RootSiblingParent>
   );
 }
 
