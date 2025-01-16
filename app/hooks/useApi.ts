@@ -150,10 +150,54 @@ export const useApi = () => {
         }
     };
 
+    const speechToText = async (audioUri: string) => {
+
+        // Check if API key is not found
+        if (!apiKey) {
+            const errorMessage = 'No API key found';
+            if (Platform.OS === 'web') {
+                window.alert(errorMessage);
+            } else {
+                Alert.alert('Error', errorMessage);
+            }
+            return;
+        }
+
+        try {
+            // Prepare form data for the request
+            const formData = new FormData();
+            const audioData = {
+                uri: audioUri,
+                type: 'audio/mp4',
+                name: 'audio/m4a',
+            };
+
+            // (For a different model: https://platform.openai.com/docs/models)
+            formData.append('model', 'whisper-1');
+            formData.append('file', audioData as unknown as Blob);
+
+            // Make a POST request to the OpenAI Whisper API
+            const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'multipart/form-data',
+                },
+                body: formData,
+            });
+
+            return response.json();
+
+        } catch (error) {
+            console.error('Error in speechToText:', error);
+        }
+    };
+
 
     return {
         messages,
         getCompletion,
         generateImage,
+        speechToText
     };
 };
